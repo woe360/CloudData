@@ -1,7 +1,5 @@
 # Ransomware Detection and Analysis System
 
-# Ransomware Detection and Analysis System
-
 A comprehensive system for detecting and analyzing ransomware behavior using machine learning and real-time monitoring.
 
 ## Table of Contents
