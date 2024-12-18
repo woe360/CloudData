@@ -92,7 +92,7 @@ plotly==5.17.0
 ### Installation
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/ransomware-detection.git
+git clone [https://github.com/woe360/CloudData.git]
 cd ransomware-detection
 
 # Install dependencies
