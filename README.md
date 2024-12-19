@@ -1,5 +1,8 @@
 # Ransomware Detection and Analysis System
 
+![Uploading Screenshot 2024-12-19 at 21.52.42.png…]()
+
+
 A comprehensive system for detecting and analyzing ransomware behavior using machine learning and real-time monitoring.
 
 ## Table of Contents
