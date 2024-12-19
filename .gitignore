@@ -1,10 +1,17 @@
-# Edit .gitignore to fix the formatting
-echo "# Create .gitignore file with these contents:
+# Large data files
+data/*/*/IOops.txt
+
 # Python cache files
-**pycache**/
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Virtual environment
+venv/
+env/
+.env/
+.venv/
 
 # Logs and temporary files
 *.log
@@ -14,8 +21,25 @@ file_monitor.log
 # JSON data files that are generated/processed
 activity_log.json
 processed_ransomware_da*.json
+*.tmpnat_scenario_*.json
+temp_processed_data/
 
-# Any other temporary or generated data
-*.tmp
-nat_scenario_*.json
-temp_processed_data/" > .gitignoredata/*/*/IOops.txt
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover

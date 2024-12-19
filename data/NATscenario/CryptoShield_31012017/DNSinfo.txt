@@ -1,0 +1,10 @@
+67.572361000 192.168.1.4:64104 8.8.8.8:53 0 ocsp.comodoca.com,A,IN; CNAME,IN,t3j2g9x7.stackpathcdn.com;A,IN,151.139.128.14;
+646.679448000 192.168.1.4:59243 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+62.307594000 192.168.1.4:59586 8.8.8.8:53 0 ocsp.usertrust.com,A,IN; CNAME,IN,t3j2g9x7.stackpathcdn.com;A,IN,151.139.128.14;
+15.127823000 192.168.1.4:54064 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+18.004006000 192.168.1.4:56462 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+56.821334000 192.168.1.4:56374 8.8.8.8:53 0 blog.ridemind.gr,A,IN; A,IN,45.76.81.110;
+16.302457000 192.168.1.4:50763 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+77.682482000 192.168.1.4:50620 8.8.8.8:53 0 crl.comodoca.com,A,IN; CNAME,IN,w3z5q8a6.stackpathcdn.com;A,IN,151.139.128.14;
+647.200598000 192.168.1.4:52890 8.8.8.8:53 0 update.googleapis.com,A,IN; A,IN,172.217.16.227;
+16.280594000 192.168.1.4:52535 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;

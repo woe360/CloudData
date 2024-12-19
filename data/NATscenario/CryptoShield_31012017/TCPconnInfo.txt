@@ -1,0 +1,7 @@
+192.168.1.4:49262 151.139.128.14:80  0,0 727,471 0 0 0 1 2 GET,GET 200,200  ocsp.comodoca.com:/MFEwTzBNMEswSTAJBgUrDgMCGgUABBReAhtobFzTvhaRmVeJ38QUchY9AwQUu69%2BAj36pvE8hI6t7jiY7NkyMtQCECsuburZd,ocsp.comodoca.com:/MFEwTzBNMEswSTAJBgUrDgMCGgUABBR64T7ooMQqLLQoy%2BemBUYZQOKh6QQUkK9qOpRaC9iQ6hJWc99DtDoo2ucCEE8GxxwnY
+192.168.1.4:49263 151.139.128.14:80  0 1023408 0 0 0 0 1 GET 200  crl.comodoca.com:/COMODORSADomainValidationSecureServerCA.crl
+192.168.1.4:49261 151.139.128.14:80  0 471 0 0 0 1 1 GET 200  ocsp.usertrust.com:/MFEwTzBNMEswSTAJBgUrDgMCGgUABBR8sWZUnKvbRO5iJhat9GV793rVlAQUrb2YejS0Jvf6xCZU7wO94CTLVBoCECdm7lbrSfO
+192.168.1.4:49260 45.76.81.110:443  (null) (null) 0 0 1 1 0 (null) (null)  (null)
+192.168.1.4:49259 45.76.81.110:80  661 278 0 0 0 1 1 POST 301  45.76.81.110:/test_site_scripts/moduls/traffic/get_info.php
+192.168.1.4:49258 45.76.81.110:80  (null) (null) 0 0 0 1 0 (null) (null)  (null)
+192.168.1.4:49266 172.217.16.227:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)

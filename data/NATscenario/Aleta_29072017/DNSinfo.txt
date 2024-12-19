@@ -1,0 +1,16 @@
+4257.723601000 192.168.1.4:61998 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+6637.285921000 192.168.1.4:63380 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+3638.770341000 192.168.1.4:64456 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+4822.929462000 192.168.1.4:63881 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+643.958761000 192.168.1.4:63702 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+3026.426337000 192.168.1.4:64838 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1220.849263000 192.168.1.4:64644 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+5463.520887000 192.168.1.4:57460 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+7239.005480000 192.168.1.4:57446 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+18.498589000 192.168.1.4:58670 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+18.473003000 192.168.1.4:59459 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;
+20.202608000 192.168.1.4:53390 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+2440.238570000 192.168.1.4:56158 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+17.387098000 192.168.1.4:49842 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+6043.378512000 192.168.1.4:49713 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1829.614815000 192.168.1.4:50620 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -

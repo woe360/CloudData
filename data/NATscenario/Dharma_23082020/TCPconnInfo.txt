@@ -1,0 +1,12 @@
+192.168.1.4:49195 23.39.70.39:80  0 0 1 0 0 0 1 GET 302  go.microsoft.com:/fwlink/?LinkID=121721&clcid=0x409&arch=x64&eng=0.0.0.0&asdelta=0.0.0.0&prod=925A3ACA-C353-458A-AC8D
+192.168.1.4:49190 23.39.66.15:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49187 40.67.189.14:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49193 40.67.189.14:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49189 104.102.53.13:80  0 0 1 0 0 0 1 GET 302  go.microsoft.com:/fwlink/?LinkID=121721&clcid=0x409&arch=x64&eng=0.0.0.0&asdelta=0.0.0.0&prod=925A3ACA-C353-458A-AC8D
+192.168.1.4:49182 20.45.1.107:443  (null) (null) 0 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49181 20.41.46.145:443  (null) (null) 0 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49197 92.123.32.250:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49191 92.123.32.250:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)
+192.168.1.4:49192 93.184.221.240:80  0 0 0 1 0 0 1 HEAD 200  download.windowsupdate.com:/v9/windowsupdate/redir/muv4wuredir.cab?2008241426
+192.168.1.4:49180 93.184.221.240:80  0,0 0,23612 1 0 0 0 2 HEAD,GET 200,200  download.windowsupdate.com:/v9/windowsupdate/redir/muv4wuredir.cab?2008241419,download.windowsupdate.com:/v9/windowsupdate/redir/muv4wuredir.cab?2008241419
+192.168.1.4:49196 104.119.109.218:443  (null) (null) 1 0 0 0 0 (null) (null)  (null)

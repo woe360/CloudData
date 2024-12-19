@@ -1,0 +1,9 @@
+630.197036000 192.168.1.4:58217 8.8.8.8:53 0 update.googleapis.com,A,IN; A,IN,172.217.16.227;
+18.250983000 192.168.1.4:54064 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+646.862907000 192.168.1.4:53844 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1856.208896000 192.168.1.4:55483 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+21.182920000 192.168.1.4:56462 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+19.465012000 192.168.1.4:50763 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+2454.012682000 192.168.1.4:52045 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1259.597281000 192.168.1.4:52890 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+19.439852000 192.168.1.4:52535 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;

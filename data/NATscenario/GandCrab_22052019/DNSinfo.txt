@@ -1,0 +1,10 @@
+617.588599000 192.168.1.4:62019 8.8.8.8:53 0 clients2.google.com,A,IN; CNAME,IN,clients.l.google.com;A,IN,172.217.16.238;
+363.827825000 192.168.1.4:64511 8.8.8.8:53 0 update.googleapis.com,A,IN; A,IN,172.217.16.227;
+15.481361000 192.168.1.4:65380 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+644.922570000 192.168.1.4:58217 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+15.463486000 192.168.1.4:57389 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;
+14.631381000 192.168.1.4:58670 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+950.699870000 192.168.1.4:60876 8.8.8.8:53 3 www.kakaocorp.link,A,IN; -
+17.261039000 192.168.1.4:56462 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1836.642785000 192.168.1.4:52045 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+1240.690204000 192.168.1.4:52872 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -

@@ -1,0 +1,8 @@
+23.436981000 192.168.1.4:61463 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+644.312768000 192.168.1.4:64511 8.8.8.8:53 0 clients2.google.com,A,IN; CNAME,IN,clients.l.google.com;A,IN,172.217.16.238;
+640.187994000 192.168.1.4:64104 8.8.8.8:53 0 update.googleapis.com,A,IN; A,IN,172.217.16.227;
+644.350530000 192.168.1.4:58615 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+22.475998000 192.168.1.4:54064 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+39.758554000 192.168.1.4:53980 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+23.417089000 192.168.1.4:53390 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;
+24.661105000 192.168.1.4:52535 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -

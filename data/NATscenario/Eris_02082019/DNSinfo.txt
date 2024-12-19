@@ -1,0 +1,12 @@
+53.334367000 192.168.1.4:64510 8.8.8.8:53 0 extreme-ip-lookup.com,A,IN; A,IN,109.236.91.3;
+1238.857385000 192.168.1.4:64511 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+2430.454603000 192.168.1.4:64188 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+16.660576000 192.168.1.4:65380 8.8.8.8:53 0 dns.msftncsi.com,AAAA,IN; AAAA,IN,fd3e:4f5a:5b81::1;
+616.174141000 192.168.1.4:64644 8.8.8.8:53 0 clients2.google.com,A,IN; CNAME,IN,clients.l.google.com;A,IN,172.217.16.238;
+16.640860000 192.168.1.4:57389 8.8.8.8:53 0 dns.msftncsi.com,A,IN; A,IN,131.107.255.255;
+1833.202414000 192.168.1.4:59243 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+17.847199000 192.168.1.4:59971 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+615.560352000 192.168.1.4:59561 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+53.749244000 192.168.1.4:60873 8.8.8.8:53 0 evilnnwzczbcbi4edpi4tx3khwbnty3obfhemd5i5gbyci3hxx3k5pad.onion.pet,A,IN; A,IN,198.251.80.48;
+15.428715000 192.168.1.4:54064 8.8.8.8:53 3 teredo.ipv6.microsoft.com,A,IN; -
+95.286408000 192.168.1.4:56374 8.8.8.8:53 0 update.googleapis.com,A,IN; A,IN,172.217.16.227;
