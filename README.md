@@ -100,27 +100,50 @@ tqdm==4.65.0
 plotly==5.17.0
 ```
 
-## Usage
-
 ### Installation
 
+### Prerequisites
+
+- Python 3.10 or higher
+- Git
+
+### Steps
+
+1. Clone the repository:
+
 ```bash
-# Clone repository
-git clone [https://github.com/woe360/CloudData.git]
+git clone https://github.com/woe360/CloudData.git
 cd ransomware-detection
 
-# Install dependencies
+2. Install dependencies:
+
 pip install -r requirements.txt
 ```
 
+## Usage
+
 ### Running the System
+
+Start the monitoring dashboard:
 
 ```bash
 # Run the dashboard
-streamlit run src/main.py
+streamlit run src/main.py & press Process Data in the sidebar
 
 # Process specific log files
 python src/data_processor.py --nat-dir data/NATscenario --original-dir data/originalScenario
+```
+
+### Data Directory Structure
+
+```
+data/
+├── NATscenario/
+│   └── [ransomware_families]/
+│       ├── TCPconnInfo.txt
+│       ├── DNSinfo.txt
+│       └── IOops.txt
+└── originalScenario/
 ```
 
 ## Performance Evaluation
@@ -150,16 +173,8 @@ python src/data_processor.py --nat-dir data/NATscenario --original-dir data/orig
 ### Achievements
 
 - Successfully processes large volumes of ransomware behavioral data
-- Real-time monitoring and visualization capabilities
+- Monitoring and visualization capabilities
 - Memory-efficient processing of large log files
-
-### Future Work
-
-- Implementation of distributed processing
-- Enhanced ML model training
-- Integration with cloud-based storage
-- Addition of more ransomware families
-- Improved visualization and reporting
 
 ## References
 
