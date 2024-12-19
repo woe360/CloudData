@@ -1,0 +1,21 @@
+# Edit .gitignore to fix the formatting
+echo "# Create .gitignore file with these contents:
+# Python cache files
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and temporary files
+*.log
+temp_process/
+file_monitor.log
+
+# JSON data files that are generated/processed
+activity_log.json
+processed_ransomware_da*.json
+
+# Any other temporary or generated data
+*.tmp
+nat_scenario_*.json
+temp_processed_data/" > .gitignoredata/*/*/IOops.txt
