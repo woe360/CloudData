@@ -1,92 +1,70 @@
+# main.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import json
 from datetime import datetime, timedelta
 import time
 import os
-from watchdog.observers import Observer
-from trainer import RansomwareTrainer
-from analyzer import RansomwareAnalyzer
-from file_monitor import FileEventHandler
-from data_processor import RansomwareLogProcessor
+from pathlib import Path
+from monitor import setup_monitoring
+import logging
+import sqlite3
 
 class RansomwareMonitor:
     def __init__(self):
-        # Base paths
-        self.base_dir = os.path.join(os.getcwd(), "data")
-        self.nat_directory = os.path.join(self.base_dir, "NATscenario")
-        self.original_directory = os.path.join(self.base_dir, "originalScenario")
-        self.log_file = os.path.join("src", "activity_log.json")
-        
-        # Log file types
-        self.log_types = ["DNSinfo.txt", "IOops.txt", "TCPconnInfo.txt"]
-        
-        # Create directories if they don't exist
-        os.makedirs(self.nat_directory, exist_ok=True)
-        os.makedirs(self.original_directory, exist_ok=True)
-        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-        
-        # Get all ransomware families
-        self.ransomware_families = [
-            d for d in os.listdir(self.nat_directory) 
-            if os.path.isdir(os.path.join(self.nat_directory, d))
-        ]
-        
-        # Process historical data first
-        self.processor = RansomwareLogProcessor(self.nat_directory, self.original_directory)
-        try:
-            st.info("Processing historical data...")
-            parsed_data = self.processor.process_all()
-            
-            # Train model with processed data
-            self.trainer = RansomwareTrainer()
-            self.trainer.train_on_logs(parsed_data)
-            print("Initial model training completed!")
-        except Exception as e:
-            print(f"Error during initial processing: {str(e)}")
-        
-        # Initialize monitoring components
-        self.event_handler = FileEventHandler(self.log_file)
-        self.observer = Observer()
-        self.analyzer = RansomwareAnalyzer(self.log_file)
-        
-        # Start real-time monitoring
-        self.observer.schedule(self.event_handler, self.nat_directory, recursive=True)
-        self.observer.start()
-
-    def train_model(self):
-        """Train/update the model"""
-        try:
-            parsed_data = self.processor.process_all()
-            self.trainer.train_on_logs(parsed_data)
-            print("Model training completed!")
-        except Exception as e:
-            print(f"Error training model: {str(e)}")
-            time.sleep(1)
-
-    def display_family_selector(self):
-        """Add ransomware family selector to sidebar"""
-        st.sidebar.subheader("Ransomware Family Selection")
-        selected_family = st.sidebar.selectbox(
-            "Select Family to Analyze",
-            ["All"] + self.ransomware_families
+        # Configure logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        return selected_family
+        self.logger = logging.getLogger('RansomwareMonitor')
+        
+        # Base paths
+        self.base_dir = Path(os.getcwd()) / "data"
+        self.nat_directory = self.base_dir / "NATscenario"
+        self.original_directory = self.base_dir / "originalScenario"
+        self.db_file = Path("src/activity.db")
+        
+        # Create directories
+        self.nat_directory.mkdir(parents=True, exist_ok=True)
+        self.original_directory.mkdir(parents=True, exist_ok=True)
+        self.db_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize session state
+        if 'data_processed' not in st.session_state:
+            st.session_state.data_processed = False
+        
+        if 'monitor_active' not in st.session_state:
+            st.session_state.monitor_active = False
+            
+        # Set up detector only once
+        if 'detector' not in st.session_state:
+            _, st.session_state.detector = setup_monitoring(
+                str(self.base_dir), 
+                str(self.db_file)
+            )
+    
+    def process_data(self):
+        """Process log files only if not already processed"""
+        if not st.session_state.data_processed:
+            with st.spinner("Processing log files... This may take a moment."):
+                try:
+                    for family_dir in self.nat_directory.iterdir():
+                        if family_dir.is_dir():
+                            for log_type in ["TCPconnInfo.txt", "IOops.txt", "DNSinfo.txt"]:
+                                log_file = family_dir / log_type
+                                if log_file.exists():
+                                    st.session_state.detector.process_log_file(str(log_file))
+                    st.session_state.data_processed = True
+                    st.success("Data processing complete!")
+                except Exception as e:
+                    st.error(f"Error processing files: {e}")
 
-    def filter_data_by_family(self, df, family):
-        """Filter dataframe based on selected family"""
-        if family != "All":
-            return df[df['path'].str.contains(family, na=False)]
-        return df
-
-    def load_activity_log(self):
-        """Load activity log data"""
-        try:
-            return self.analyzer.load_activity_log()
-        except Exception as e:
-            st.error(f"Error loading activity log: {str(e)}")
-            return pd.DataFrame()
+    @staticmethod
+    @st.cache_data(ttl=5)
+    def load_data(limit, current_time):
+        """Load and cache data from the database"""
+        return st.session_state.detector.get_events(limit=limit)
 
     def display_metrics(self, df):
         """Display key metrics"""
@@ -98,50 +76,77 @@ class RansomwareMonitor:
         with col1:
             st.metric("Total Events", len(df))
         with col2:
-            st.metric("Unique Files", df['path'].nunique())
+            unique_ips = pd.concat([
+                df['src_ip'].dropna(),
+                df['dst_ip'].dropna()
+            ]).nunique()
+            st.metric("Unique IPs", unique_ips)
         with col3:
-            timespan = (df['timestamp'].max() - df['timestamp'].min()).total_seconds()
+            timespan = df['timestamp'].max() - df['timestamp'].min()
             st.metric("Time Span (s)", f"{timespan:.2f}")
         with col4:
             events_per_sec = len(df) / timespan if timespan > 0 else 0
             st.metric("Events/Second", f"{events_per_sec:.2f}")
 
     def display_timeline(self, df):
-        """Display activity timeline"""
+        """Display event timeline"""
         if df.empty:
             return
 
         st.subheader("Activity Timeline")
-        timeline_data = self.analyzer.get_activity_timeline(df)
-        if not timeline_data.empty:
-            fig = px.line(timeline_data, title="Event Frequency Over Time")
-            st.plotly_chart(fig)
+        df['time'] = pd.to_datetime(df['timestamp'], unit='s')
+        timeline = df.groupby([pd.Grouper(key='time', freq='1Min'), 'event_type']).size().reset_index(name='count')
+        
+        fig = px.line(timeline, x='time', y='count', color='event_type', 
+                     title="Event Frequency Over Time")
+        st.plotly_chart(fig, use_container_width=True)
 
-    def display_event_distribution(self, df):
-        """Display event type distribution"""
+    def display_network_analysis(self, df):
+        """Display network analysis"""
         if df.empty:
             return
 
-        st.subheader("Event Distribution")
-        distribution = self.analyzer.get_event_distribution(df)
-        if distribution:
-            fig = px.pie(values=list(distribution.values()),
-                        names=list(distribution.keys()),
-                        title="Event Types")
-            st.plotly_chart(fig)
+        st.subheader("Network Activity")
+        
+        # Event type distribution
+        event_dist = df['event_type'].value_counts()
+        fig = px.pie(values=event_dist.values, names=event_dist.index, 
+                    title="Event Type Distribution")
+        st.plotly_chart(fig, use_container_width=True)
 
-    def display_extension_analysis(self, df):
-        """Display file extension analysis"""
-        if df.empty:
+        # IP analysis
+        network_df = df[df['event_type'] == 'network']
+        if not network_df.empty:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Top Source IPs")
+                src_ip_counts = network_df['src_ip'].value_counts().head(10)
+                fig = px.bar(x=src_ip_counts.index, y=src_ip_counts.values,
+                           title="Top Source IPs")
+                st.plotly_chart(fig, use_container_width=True)
+                
+            with col2:
+                st.subheader("Top Destination IPs")
+                dst_ip_counts = network_df['dst_ip'].value_counts().head(10)
+                fig = px.bar(x=dst_ip_counts.index, y=dst_ip_counts.values,
+                           title="Top Destination IPs")
+                st.plotly_chart(fig, use_container_width=True)
+
+    def display_filesystem_activity(self, df):
+        """Display filesystem activity analysis"""
+        filesystem_df = df[df['event_type'] == 'filesystem']
+        if filesystem_df.empty:
             return
 
-        st.subheader("File Extensions")
-        extensions = self.analyzer.get_extension_analysis(df)
-        if extensions:
-            fig = px.bar(x=list(extensions.keys()),
-                        y=list(extensions.values()),
-                        title="File Extensions")
-            st.plotly_chart(fig)
+        st.subheader("Filesystem Activity")
+        
+        # Operation types
+        if 'operation' in filesystem_df.columns:
+            op_counts = filesystem_df['operation'].value_counts()
+            fig = px.pie(values=op_counts.values, names=op_counts.index,
+                        title="Operation Types")
+            st.plotly_chart(fig, use_container_width=True)
 
     def display_threat_analysis(self, df):
         """Display threat analysis"""
@@ -149,87 +154,86 @@ class RansomwareMonitor:
             return
 
         st.subheader("Threat Analysis")
-        threats = self.analyzer.analyze_threats(df)
         
-        if threats:
-            for threat in threats:
-                with st.expander(f"Threat Score: {threat['threat_score']} - {threat['path']}"):
-                    st.write(f"First seen: {threat['first_seen']}")
-                    st.write(f"Last seen: {threat['last_seen']}")
-                    st.write(f"Event count: {threat['event_count']}")
-                    st.write("Indicators:")
-                    for indicator in threat['indicators']:
-                        st.write(f"- {indicator}")
-
-    def display_recent_events(self, df, num_events):
-        """Display recent events"""
-        if df.empty:
-            return
-
-        st.subheader("Recent Events")
-        recent = df.sort_values('timestamp', ascending=False).head(num_events)
-        st.dataframe(recent)
+        # Get recent suspicious events
+        recent_time = time.time() - 3600  # Last hour
+        suspicious = df[df['timestamp'] > recent_time]
+        
+        if not suspicious.empty:
+            with st.expander("Recent Suspicious Activities", expanded=True):
+                for _, event in suspicious.iterrows():
+                    event_type = event.get('event_type', 'unknown')
+                    if event_type == 'network':
+                        st.warning(f"Network connection: {event['src_ip']} → {event['dst_ip']}")
+                    elif event_type == 'filesystem':
+                        st.warning(f"File operation: {event['operation']} on {event['path']}")
 
     def run(self):
-        try:
-            st.title("🛡️ Ransomware Detection Monitor")
-            
-            # Display data source information
-            st.sidebar.title("Data Source")
-            st.sidebar.text(f"NAT Scenario: {self.nat_directory}")
-            st.sidebar.text(f"Log Types: {', '.join(self.log_types)}")
-            
-            # Family selector
-            selected_family = self.display_family_selector()
-            
-            # Sidebar controls
-            st.sidebar.title("Controls")
-            events_to_show = st.sidebar.slider("Number of events to display", 10, 100, 50)
-            auto_refresh = st.sidebar.checkbox('Auto-refresh')
-            refresh_rate = st.sidebar.slider("Refresh rate (seconds)", 1, 10, 5)
-            
-            # Model training controls
-            self.train_model()
-            
-            # Load and process data
-            df = self.load_activity_log()
-            
-            if not df.empty:
-                # Apply family filter
-                df = self.filter_data_by_family(df, selected_family)
-                
-                # Convert timestamps
-                df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
-                
-                # Display components
-                self.display_metrics(df)
-                self.display_timeline(df)
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    self.display_event_distribution(df)
-                with col2:
-                    self.display_extension_analysis(df)
-                
-                self.display_threat_analysis(df)
-                self.display_recent_events(df, events_to_show)
-            else:
-                st.info("No data available - Processing initial data...")
-            
-            # Auto-refresh logic
-            if auto_refresh:
-                time.sleep(refresh_rate)
-                st.rerun()
-
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
-            st.error(f"Error details: {str(e)}")
+        st.title("🛡️ Ransomware Detection Monitor")
         
-        finally:
-            self.observer.stop()
-            self.observer.join()
+        # Sidebar controls
+        st.sidebar.title("Data Source")
+        st.sidebar.text(f"Data Directory: {self.base_dir}")
+        
+        # Process Data button
+        if not st.session_state.data_processed:
+            if st.sidebar.button("Process Data"):
+                self.process_data()
+        
+        # Monitoring controls
+        st.sidebar.title("Monitoring")
+        if st.sidebar.checkbox("Enable Live Monitoring", value=st.session_state.monitor_active):
+            st.session_state.monitor_active = True
+            refresh_rate = st.sidebar.slider("Refresh rate (seconds)", 1, 30, 5)
+            auto_refresh = True
+        else:
+            st.session_state.monitor_active = False
+            auto_refresh = False
+            refresh_rate = 5
+        
+        events_to_show = st.sidebar.slider("Events to display", 100, 1000, 500)
+        
+        # Load data
+        df = RansomwareMonitor.load_data(events_to_show, int(time.time()))
+        
+        if not df.empty:
+            # Display components
+            self.display_metrics(df)
+            self.display_timeline(df)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                self.display_network_analysis(df)
+            with col2:
+                self.display_filesystem_activity(df)
+            
+            self.display_threat_analysis(df)
+            
+            # Recent events table
+            st.subheader("Recent Events")
+            display_df = df.sort_values('timestamp', ascending=False).head(50)
+            if 'id' in display_df.columns:
+                display_df = display_df.drop('id', axis=1)
+            st.dataframe(display_df, use_container_width=True)
+        else:
+            if not st.session_state.data_processed:
+                st.info("Click 'Process Data' in the sidebar to load the log files.")
+            else:
+                st.warning("No events found in the database.")
+        
+        # Auto-refresh only if monitoring is active
+        if auto_refresh and st.session_state.monitor_active:
+            time.sleep(refresh_rate)
+            st.rerun()
 
 def main():
+    st.set_page_config(
+        page_title="Ransomware Detection Monitor",
+        page_icon="🛡️",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
     monitor = RansomwareMonitor()
     monitor.run()
 

@@ -1,267 +1,252 @@
-# import os
-# import time
-# import json
-# from watchdog.observers import Observer
-# from watchdog.events import FileSystemEventHandler
-# from collections import defaultdict
-# import logging
-# import pandas as pd
-# from ml_training import RansomwareML
-
-# class RansomwareDetector:
-#     def __init__(self, watch_directory):
-#         self.watch_directory = watch_directory
-#         self.alert_threshold = 10
-#         self.suspicious_extensions = {'.encrypted', '.crypto', '.locked', '.decrypt'}
-#         self.activity_log = defaultdict(list)
-        
-#         # Initialize ML detector
-#         self.ml_detector = RansomwareML()
-#         try:
-#             self.ml_detector.load_model('ransomware_model.joblib')
-#             self.using_ml = True
-#             print("ML model loaded successfully")
-#         except Exception as e:
-#             self.using_ml = False
-#             print(f"Could not load ML model: {e}. Using only rule-based detection.")
-        
-#         logging.basicConfig(level=logging.INFO)
-#         self.logger = logging.getLogger('RansomwareDetector')
-    
-#     def check_suspicious_activity(self, event_time, event_type, file_path):
-#         one_minute_ago = event_time - 60
-#         recent_events = [event for event in self.activity_log['events'] 
-#                         if event['timestamp'] > one_minute_ago]
-        
-#         # Traditional rule-based detection
-#         _, ext = os.path.splitext(file_path)
-#         is_suspicious_ext = ext.lower() in self.suspicious_extensions
-#         high_activity = len(recent_events) > self.alert_threshold
-        
-#         # ML-based detection
-#         ml_suspicious = False
-#         if self.using_ml and recent_events:
-#             try:
-#                 recent_df = pd.DataFrame(recent_events)
-#                 ml_suspicious = self.ml_detector.predict(recent_df)
-#             except Exception as e:
-#                 self.logger.error(f"ML prediction error: {e}")
-        
-#         # Combined detection
-#         if is_suspicious_ext or high_activity or ml_suspicious:
-#             self.logger.warning("ALERT: Suspicious activity detected!")
-#             self.logger.warning(f"File: {file_path}")
-            
-#             # Collect all triggered detection methods
-#             reasons = []
-#             if is_suspicious_ext:
-#                 reasons.append("Suspicious extension detected")
-#             if high_activity:
-#                 reasons.append("High modification rate")
-#             if ml_suspicious:
-#                 reasons.append("ML model detected suspicious pattern")
-                
-#             self.logger.warning("Reasons: " + ", ".join(reasons))
-            
-#             # Save alert to file
-#             self.save_alert(event_time, file_path, reasons)
-#             return True
-#         return False
-    
-#     def save_alert(self, event_time, file_path, reasons):
-#         """Save alert details to a file for later analysis"""
-#         alert = {
-#             'timestamp': event_time,
-#             'file_path': file_path,
-#             'reasons': reasons,
-#             'recent_events_count': len(self.activity_log['events'])
-#         }
-        
-#         try:
-#             alerts = []
-#             if os.path.exists('alerts.json'):
-#                 with open('alerts.json', 'r') as f:
-#                     alerts = json.load(f)
-            
-#             alerts.append(alert)
-            
-#             with open('alerts.json', 'w') as f:
-#                 json.dump(alerts, f, indent=2)
-#         except Exception as e:
-#             self.logger.error(f"Error saving alert: {e}")
-
-# class FileMonitor(FileSystemEventHandler):
-#     def __init__(self, detector):
-#         self.detector = detector
-
-#     def on_modified(self, event):
-#         if not event.is_directory:
-#             current_time = time.time()
-#             self.detector.activity_log['events'].append({
-#                 'timestamp': current_time,
-#                 'event_type': 'modified',
-#                 'path': event.src_path
-#             })
-#             self.detector.check_suspicious_activity(current_time, 'modified', 
-#                                                  event.src_path)
-
-#     def on_created(self, event):
-#         if not event.is_directory:
-#             current_time = time.time()
-#             self.detector.activity_log['events'].append({
-#                 'timestamp': current_time,
-#                 'event_type': 'created',
-#                 'path': event.src_path
-#             })
-#             self.detector.check_suspicious_activity(current_time, 'created', 
-#                                                  event.src_path)
-
-# def main():
-#     watch_directory = "."
-#     detector = RansomwareDetector(watch_directory)
-#     detector.activity_log['events'] = []
-    
-#     event_handler = FileMonitor(detector)
-#     observer = Observer()
-#     observer.schedule(event_handler, watch_directory, recursive=True)
-#     observer.start()
-    
-#     print(f"Monitoring directory: {os.path.abspath(watch_directory)}")
-#     print("Press Ctrl+C to stop monitoring")
-    
-#     try:
-#         while True:
-#             time.sleep(1)
-#     except KeyboardInterrupt:
-#         observer.stop()
-#         print("\nStopping monitor...")
-#     observer.join()
-
-# if __name__ == "__main__":
-#     main()
-
-
+# monitor.py
 import os
 import time
 import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from collections import defaultdict
 import logging
 import pandas as pd
-from ml_training import RansomwareML
+from datetime import datetime
+from pathlib import Path
+import sqlite3
+import threading
 
 class RansomwareDetector:
-    def __init__(self, watch_directory):
+    def __init__(self, watch_directory, db_file='src/activity.db'):
         self.watch_directory = watch_directory
+        self.db_file = db_file
         self.alert_threshold = 10
         self.suspicious_extensions = {'.encrypted', '.crypto', '.locked', '.decrypt'}
-        self.activity_log = {'events': []}  # Changed to list with events key
+        self.lock = threading.Lock()
         
-        # Initialize ML detector
-        self.ml_detector = RansomwareML()
-        try:
-            self.ml_detector.load_model('ransomware_model.joblib')
-            self.using_ml = True
-            print("ML model loaded successfully")
-        except Exception as e:
-            self.using_ml = False
-            print(f"Could not load ML model: {e}. Using only rule-based detection.")
-        
+        # Set up logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger('RansomwareDetector')
-    
-    def save_activity_log(self):
-        """Save activity log to file"""
+        
+        # Initialize database
+        self.init_database()
+        
+    def init_database(self):
+        """Initialize SQLite database for storing events"""
         try:
-            with open('activity_log.json', 'w') as f:
-                json.dump(self.activity_log, f, indent=2)
+            os.makedirs(os.path.dirname(self.db_file), exist_ok=True)
+            with sqlite3.connect(self.db_file) as conn:
+                conn.execute('''
+                    CREATE TABLE IF NOT EXISTS events (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp REAL,
+                        event_time TEXT,
+                        event_type TEXT,
+                        src_ip TEXT,
+                        dst_ip TEXT,
+                        src_port INTEGER,
+                        dst_port INTEGER,
+                        command TEXT,
+                        operation TEXT,
+                        path TEXT,
+                        query TEXT
+                    )
+                ''')
+                conn.commit()
         except Exception as e:
-            self.logger.error(f"Error saving activity log: {e}")
-    
-    def check_suspicious_activity(self, event_time, event_type, file_path):
-        one_minute_ago = event_time - 60
-        recent_events = [event for event in self.activity_log['events'] 
-                        if event['timestamp'] > one_minute_ago]
-        
-        # Traditional rule-based detection
-        _, ext = os.path.splitext(file_path)
-        is_suspicious_ext = ext.lower() in self.suspicious_extensions
-        high_activity = len(recent_events) > self.alert_threshold
-        
-        # ML-based detection
-        ml_suspicious = False
-        if self.using_ml and recent_events:
-            try:
-                recent_df = pd.DataFrame(recent_events)
-                ml_suspicious = self.ml_detector.predict(recent_df)
-            except Exception as e:
-                self.logger.error(f"ML prediction error: {e}")
-        
-        # Save activity log after each check
-        self.save_activity_log()
-        
-        if is_suspicious_ext or high_activity or ml_suspicious:
-            self.logger.warning("ALERT: Suspicious activity detected!")
-            self.logger.warning(f"File: {file_path}")
-            reasons = []
-            if is_suspicious_ext:
-                reasons.append("Suspicious extension detected")
-            if high_activity:
-                reasons.append("High modification rate")
-            if ml_suspicious:
-                reasons.append("ML model detected suspicious pattern")
-            
-            self.logger.warning("Reasons: " + ", ".join(reasons))
-            self.save_alert(event_time, file_path, reasons)
-            return True
-        return False
+            self.logger.error(f"Error initializing database: {e}")
 
-class FileMonitor(FileSystemEventHandler):
+    def add_event(self, event):
+        """Add a single event to the database"""
+        try:
+            with self.lock:
+                with sqlite3.connect(self.db_file) as conn:
+                    conn.execute('''
+                        INSERT INTO events (
+                            timestamp, event_time, event_type, src_ip, dst_ip,
+                            src_port, dst_port, command, operation, path, query
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (
+                        event.get('timestamp'),
+                        event.get('event_time'),
+                        event.get('event_type'),
+                        event.get('src_ip'),
+                        event.get('dst_ip'),
+                        event.get('src_port'),
+                        event.get('dst_port'),
+                        event.get('command'),
+                        event.get('operation'),
+                        event.get('path'),
+                        event.get('query')
+                    ))
+                    conn.commit()
+        except Exception as e:
+            self.logger.error(f"Error adding event to database: {e}")
+
+    def get_events(self, limit=1000):
+        """Get events from database as pandas DataFrame"""
+        try:
+            with sqlite3.connect(self.db_file) as conn:
+                return pd.read_sql_query(
+                    'SELECT * FROM events ORDER BY timestamp DESC LIMIT ?',
+                    conn,
+                    params=(limit,)
+                )
+        except Exception as e:
+            self.logger.error(f"Error getting events from database: {e}")
+            return pd.DataFrame()
+
+    def extract_ip_port(self, ip_port_str):
+        """Safely extract IP and port from string"""
+        try:
+            if ':' in ip_port_str:
+                ip, port = ip_port_str.split(':')
+                return ip, int(port)
+            return ip_port_str, None
+        except Exception:
+            return ip_port_str, None
+
+    def process_log_line(self, line, log_type):
+        """Process a single log line based on type"""
+        try:
+            if not line.strip() or line.startswith('Timestamp') or 'IP_src' in line:
+                return None
+
+            fields = line.strip().split()
+            if not fields:
+                return None
+
+            try:
+                timestamp = float(fields[0])
+            except ValueError:
+                return None
+
+            event = {
+                'timestamp': timestamp,
+                'event_time': datetime.fromtimestamp(timestamp).isoformat()
+            }
+
+            if log_type == "TCPconnInfo.txt":
+                src_ip, src_port = self.extract_ip_port(fields[1])
+                dst_ip, dst_port = self.extract_ip_port(fields[2])
+                
+                event.update({
+                    'event_type': 'network',
+                    'src_ip': src_ip,
+                    'dst_ip': dst_ip,
+                    'src_port': src_port,
+                    'dst_port': dst_port,
+                    'command': fields[3] if len(fields) > 3 else None
+                })
+            elif log_type == "IOops.txt":
+                event.update({
+                    'event_type': 'filesystem',
+                    'operation': fields[1] if len(fields) > 1 else None,
+                    'path': ' '.join(fields[2:]) if len(fields) > 2 else None
+                })
+            elif log_type == "DNSinfo.txt":
+                src_ip, _ = self.extract_ip_port(fields[1])
+                dst_ip, _ = self.extract_ip_port(fields[2])
+                
+                event.update({
+                    'event_type': 'dns',
+                    'src_ip': src_ip,
+                    'dst_ip': dst_ip,
+                    'query': fields[4] if len(fields) > 4 else None
+                })
+            
+            return event
+            
+        except Exception as e:
+            self.logger.error(f"Error processing log line: {e}")
+            return None
+
+    def process_log_file(self, file_path):
+        """Process a log file and add events to database"""
+        encodings = ['utf-8', 'latin1', 'cp1252', 'iso-8859-1']
+        
+        for encoding in encodings:
+            try:
+                log_type = os.path.basename(file_path)
+                with open(file_path, 'r', encoding=encoding) as f:
+                    next(f, None)  # Skip header
+                    
+                    for line in f:
+                        event = self.process_log_line(line, log_type)
+                        if event:
+                            self.add_event(event)
+                return  # If successful, exit the encoding loop
+                
+            except UnicodeDecodeError:
+                continue
+            except Exception as e:
+                self.logger.error(f"Error processing log file {file_path} with {encoding}: {e}")
+
+    def check_suspicious_activity(self, event):
+        """Check for suspicious activity patterns"""
+        try:
+            with sqlite3.connect(self.db_file) as conn:
+                # Check recent activity
+                recent_count = conn.execute('''
+                    SELECT COUNT(*) FROM events 
+                    WHERE timestamp > ?
+                ''', (time.time() - 60,)).fetchone()[0]
+                
+                if recent_count > self.alert_threshold:
+                    self.logger.warning("High activity detected!")
+                    return True
+                    
+                if event.get('event_type') == 'filesystem':
+                    path = event.get('path', '')
+                    _, ext = os.path.splitext(path)
+                    if ext.lower() in self.suspicious_extensions:
+                        self.logger.warning(f"Suspicious extension detected: {ext}")
+                        return True
+                        
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error checking suspicious activity: {e}")
+            return False
+
+class FileEventHandler(FileSystemEventHandler):
     def __init__(self, detector):
         self.detector = detector
+        self._observer = None
+
+    def handle_event(self, event, event_type):
+        if event.is_directory:
+            return
+            
+        file_name = os.path.basename(event.src_path)
+        if file_name in ["TCPconnInfo.txt", "IOops.txt", "DNSinfo.txt"]:
+            self.detector.process_log_file(event.src_path)
 
     def on_modified(self, event):
-        if not event.is_directory:
-            current_time = time.time()
-            self.detector.activity_log['events'].append({
-                'timestamp': current_time,
-                'event_type': 'modified',
-                'path': event.src_path
-            })
-            self.detector.save_activity_log()  # Save after each event
-            self.detector.check_suspicious_activity(current_time, 'modified', event.src_path)
+        self.handle_event(event, 'modified')
 
     def on_created(self, event):
-        if not event.is_directory:
-            current_time = time.time()
-            self.detector.activity_log['events'].append({
-                'timestamp': current_time,
-                'event_type': 'created',
-                'path': event.src_path
-            })
-            self.detector.save_activity_log()  # Save after each event
-            self.detector.check_suspicious_activity(current_time, 'created', event.src_path)
+        self.handle_event(event, 'created')
 
-def main():
-    watch_directory = "."
-    detector = RansomwareDetector(watch_directory)
-    
-    event_handler = FileMonitor(detector)
-    observer = Observer()
-    observer.schedule(event_handler, watch_directory, recursive=True)
-    observer.start()
-    
-    print(f"Monitoring directory: {os.path.abspath(watch_directory)}")
-    print("Press Ctrl+C to stop monitoring")
+def setup_monitoring(watch_directory, db_file='src/activity.db'):
+    """Set up the monitoring system"""
+    try:
+        detector = RansomwareDetector(watch_directory, db_file)
+        handler = FileEventHandler(detector)
+        
+        observer = Observer()
+        observer.schedule(handler, watch_directory, recursive=True)
+        observer._handlers = {}  # Reset handlers to prevent duplicate scheduling
+        observer.start()
+        
+        return observer, detector
+        
+    except Exception as e:
+        logging.error(f"Error setting up monitoring: {e}")
+        raise
+
+if __name__ == "__main__":
+    watch_dir = "data"
+    observer, detector = setup_monitoring(watch_dir)
     
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
-        print("\nStopping monitor...")
     observer.join()
-
-if __name__ == "__main__":
-    main()
